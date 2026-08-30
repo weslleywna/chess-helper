@@ -22,14 +22,14 @@ export function useStockfish() {
     };
   }, []);
 
-  const analyze = useCallback(async (fen: string, movetimeMs: number) => {
+  const analyze = useCallback(async (fen: string, movetimeMs: number, eloRating: number | null = null) => {
     const client = clientRef.current;
     if (!client) return;
 
     setIsThinking(true);
     setSuggestion(null);
 
-    const { bestMove } = await client.analyze(fen, movetimeMs);
+    const { bestMove } = await client.analyze(fen, movetimeMs, eloRating);
     setIsThinking(false);
 
     if (!bestMove || bestMove === NO_MOVE) {

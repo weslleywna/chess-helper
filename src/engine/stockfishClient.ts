@@ -3,6 +3,9 @@ export type AnalysisResult = {
   ponderMove: string | null;
 };
 
+export const MIN_ELO = 1320;
+export const MAX_ELO = 3190;
+
 const STOCKFISH_WORKER_PATH = '/stockfish/stockfish-18-lite-single.js';
 
 export class StockfishClient {
@@ -52,11 +55,22 @@ export class StockfishClient {
     });
   }
 
-  async analyze(fen: string, movetimeMs: number): Promise<AnalysisResult> {
+  /**
+   * eloRating: null = força máxima (melhor jogada possível). Um número
+   * (1320-3190) restringe o motor a jogar aproximadamente nesse nível.
+   */
+  async analyze(fen: string, movetimeMs: number, eloRating: number | null = null): Promise<AnalysisResult> {
     await this.readyPromise;
 
     if (this.isAnalyzing) {
       await this.stopAndWaitIdle();
+    }
+
+    if (eloRating) {
+      this.worker.postMessage('setoption name UCI_LimitStrength value true');
+      this.worker.postMessage(`setoption name UCI_Elo value ${eloRating}`);
+    } else {
+      this.worker.postMessage('setoption name UCI_LimitStrength value false');
     }
 
     this.isAnalyzing = true;

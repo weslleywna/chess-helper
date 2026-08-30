@@ -149,6 +149,34 @@ code {
   border-radius: 8px;
 }
 
+.engine-controls__mode {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.engine-controls__mode button {
+  flex: 1;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.engine-controls__mode button.active {
+  background: var(--accent-bg);
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.engine-controls__mode button:disabled {
+  cursor: not-allowed;
+}
+
 .engine-controls__level {
   display: flex;
   flex-direction: column;

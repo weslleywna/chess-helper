@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChessBoard } from './components/ChessBoard';
-import { EngineControls } from './components/EngineControls';
+import { EngineControls, type AnalysisMode } from './components/EngineControls';
 import { SuggestionPanel } from './components/SuggestionPanel';
 import { useChessGame } from './hooks/useChessGame';
 import { useStockfish } from './hooks/useStockfish';
@@ -10,6 +10,8 @@ export default function App() {
   const { fen, makeMove, reset, isGameOver } = useChessGame();
   const { analyze, isThinking, suggestion, clearSuggestion } = useStockfish();
   const [movetimeMs, setMovetimeMs] = useState(2000);
+  const [mode, setMode] = useState<AnalysisMode>('best');
+  const [eloRating, setEloRating] = useState(1800);
 
   const handleMove = (from: string, to: string, promotion?: string) => {
     const moved = makeMove(from, to, promotion);
@@ -22,9 +24,16 @@ export default function App() {
     clearSuggestion();
   };
 
-  const handleAnalyze = () => {
-    void analyze(fen, movetimeMs);
+  const handleModeChange = (nextMode: AnalysisMode) => {
+    setMode(nextMode);
+    clearSuggestion();
   };
+
+  const handleAnalyze = () => {
+    void analyze(fen, movetimeMs, mode === 'rated' ? eloRating : null);
+  };
+
+  const suggestionLabel = mode === 'best' ? 'Melhor resposta' : `Resposta nível ~${eloRating}`;
 
   return (
     <div className="app">
@@ -40,6 +49,10 @@ export default function App() {
 
         <div className="app__side">
           <EngineControls
+            mode={mode}
+            onModeChange={handleModeChange}
+            eloRating={eloRating}
+            onEloRatingChange={setEloRating}
             movetimeMs={movetimeMs}
             onMovetimeChange={setMovetimeMs}
             onAnalyze={handleAnalyze}
@@ -51,6 +64,7 @@ export default function App() {
             san={suggestion?.san ?? null}
             description={describeMove(suggestion?.san ?? null)}
             isThinking={isThinking}
+            label={suggestionLabel}
           />
         </div>
       </main>
