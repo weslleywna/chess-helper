@@ -6,7 +6,7 @@ export type AnalysisResult = {
 export const MIN_ELO = 1320;
 export const MAX_ELO = 3190;
 
-const STOCKFISH_WORKER_PATH = '/stockfish/stockfish-18-lite-single.js';
+const STOCKFISH_WORKER_PATH = `${import.meta.env.BASE_URL}stockfish/stockfish-18-lite-single.js`;
 
 export class StockfishClient {
   private worker: Worker;
