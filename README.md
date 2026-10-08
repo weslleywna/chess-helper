@@ -1,35 +1,25 @@
-# React + TypeScript + Vite
+# Chess Helper
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Assistente de xadrez no navegador, com o Stockfish rodando localmente (WebAssembly).
 
-Currently, two official plugins are available:
+## Funcionalidades
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Analisar** — reproduza os lances no tabuleiro e peça ao Stockfish a melhor resposta (ou um lance no nível de um rating escolhido).
+- **Barra de avaliação** — ao lado do tabuleiro, mostra em tempo real quem está melhor (em peões, ou `M3` para mate em 3), com a linha principal do motor e a profundidade da busca.
+- **Partida em andamento** — três formas de trazer uma partida que já começou:
+  1. **PGN**: cole a lista de lances (Chess.com/Lichess → Compartilhar). O tabuleiro vai para o último lance e dá para navegar pela partida inteira (botões ou setas ← → do teclado).
+  2. **FEN**: cole só a posição atual.
+  3. **Montar posição**: coloque as peças à mão (útil em tabuleiro físico), escolha de quem é a vez e analise.
+- **Jogar** — partida contra o Stockfish no nível escolhido, com treinador que aponta erros e permite desfazer.
 
-## React Compiler
+## Desenvolvimento
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev     # servidor local
+npm run lint
+npm run build
 ```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
 
 ## Licença
 

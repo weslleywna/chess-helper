@@ -1,5 +1,6 @@
 import { MAX_ELO, MIN_ELO } from '../engine/stockfishClient';
 import { ELO_PRESETS } from '../lib/constants';
+import { SearchIcon } from './icons';
 
 export type AnalysisMode = 'best' | 'rated';
 
@@ -18,7 +19,6 @@ type EngineControlsProps = {
   movetimeMs: number;
   onMovetimeChange: (ms: number) => void;
   onAnalyze: () => void;
-  onReset: () => void;
   isThinking: boolean;
   disabled?: boolean;
 };
@@ -31,13 +31,12 @@ export function EngineControls({
   movetimeMs,
   onMovetimeChange,
   onAnalyze,
-  onReset,
   isThinking,
   disabled,
 }: EngineControlsProps) {
   return (
     <div className="engine-controls">
-      <div className="engine-controls__mode" role="tablist" aria-label="Modo de análise">
+      <div className="segmented" role="tablist" aria-label="Modo de análise">
         <button
           type="button"
           role="tab"
@@ -46,7 +45,7 @@ export function EngineControls({
           onClick={() => onModeChange('best')}
           disabled={isThinking}
         >
-          Melhor jogada possível
+          Melhor jogada
         </button>
         <button
           type="button"
@@ -60,46 +59,48 @@ export function EngineControls({
         </button>
       </div>
 
-      {mode === 'rated' && (
-        <label className="engine-controls__level">
-          Rating aproximado ({MIN_ELO}–{MAX_ELO})
+      <div className="field-grid">
+        {mode === 'rated' && (
+          <label className="field-group">
+            <span className="field-label">
+              Rating aproximado ({MIN_ELO}–{MAX_ELO})
+            </span>
+            <select
+              className="field"
+              value={eloRating}
+              onChange={(event) => onEloRatingChange(Number(event.target.value))}
+              disabled={isThinking}
+            >
+              {ELO_PRESETS.map((preset) => (
+                <option key={preset.value} value={preset.value}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        <label className="field-group">
+          <span className="field-label">Tempo de análise</span>
           <select
-            value={eloRating}
-            onChange={(event) => onEloRatingChange(Number(event.target.value))}
+            className="field"
+            value={movetimeMs}
+            onChange={(event) => onMovetimeChange(Number(event.target.value))}
             disabled={isThinking}
           >
-            {ELO_PRESETS.map((preset) => (
-              <option key={preset.value} value={preset.value}>
-                {preset.label}
+            {MOVETIME_LEVELS.map((level) => (
+              <option key={level.value} value={level.value}>
+                {level.label}
               </option>
             ))}
           </select>
         </label>
-      )}
-
-      <label className="engine-controls__level">
-        Nível de análise
-        <select
-          value={movetimeMs}
-          onChange={(event) => onMovetimeChange(Number(event.target.value))}
-          disabled={isThinking}
-        >
-          {MOVETIME_LEVELS.map((level) => (
-            <option key={level.value} value={level.value}>
-              {level.label}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="engine-controls__buttons">
-        <button onClick={onAnalyze} disabled={isThinking || disabled}>
-          {isThinking ? 'Analisando…' : mode === 'best' ? 'Analisar melhor jogada' : `Analisar (nível ${eloRating})`}
-        </button>
-        <button className="secondary" onClick={onReset} disabled={isThinking}>
-          Reiniciar tabuleiro
-        </button>
       </div>
+
+      <button type="button" className="btn btn--primary btn--block" onClick={onAnalyze} disabled={isThinking || disabled}>
+        <SearchIcon />
+        {isThinking ? 'Analisando…' : mode === 'best' ? 'Analisar melhor jogada' : `Analisar (nível ${eloRating})`}
+      </button>
     </div>
   );
 }

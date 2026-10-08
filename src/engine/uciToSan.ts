@@ -19,3 +19,18 @@ export function uciMoveToSan(fen: string, uciMove: string): string | null {
 
   return match ? match.san : null;
 }
+
+/** Converte uma linha principal (lances UCI) em SAN, parando no primeiro lance inválido. */
+export function pvToSan(fen: string, pv: string[], maxPlies: number): string[] {
+  const chess = new Chess(fen);
+  const sans: string[] = [];
+  for (const uciMove of pv.slice(0, maxPlies)) {
+    const { from, to } = uciMoveToSquares(uciMove);
+    try {
+      sans.push(chess.move({ from, to, promotion: uciMove.length > 4 ? uciMove.slice(4) : undefined }).san);
+    } catch {
+      break;
+    }
+  }
+  return sans;
+}

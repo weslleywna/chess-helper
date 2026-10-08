@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { AnalysisView } from './components/AnalysisView';
 import { PlayView } from './components/PlayView';
+import { KnightLogo } from './components/icons';
 
 type AppMode = 'analyze' | 'play';
 
+const MODE_LABELS: Record<AppMode, string> = {
+  analyze: 'Analisar',
+  play: 'Jogar',
+};
+
 const MODE_DESCRIPTIONS: Record<AppMode, string> = {
-  analyze: 'Faça a jogada do adversário no tabuleiro e descubra a melhor resposta segundo o Stockfish.',
+  analyze:
+    'Reproduza os lances ou carregue uma partida em andamento (PGN/FEN). A barra mostra quem está melhor e o Stockfish sugere o próximo lance.',
   play: 'Jogue contra o Stockfish no nível que escolher. Se errar, o treinador mostra o porquê e você pode desfazer.',
 };
 
@@ -14,34 +21,37 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app__header">
-        <h1>Chess Helper</h1>
-        <div className="app__tabs" role="tablist" aria-label="Modo">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={appMode === 'analyze'}
-            className={appMode === 'analyze' ? 'active' : ''}
-            onClick={() => setAppMode('analyze')}
-          >
-            Analisar posição
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={appMode === 'play'}
-            className={appMode === 'play' ? 'active' : ''}
-            onClick={() => setAppMode('play')}
-          >
-            Jogar contra o Stockfish
-          </button>
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand__logo">
+            <KnightLogo />
+          </span>
+          <div>
+            <h1 className="brand__name">Chess Helper</h1>
+            <p className="brand__tagline">Seu assistente de xadrez com Stockfish</p>
+          </div>
         </div>
-        <p>{MODE_DESCRIPTIONS[appMode]}</p>
+        <nav className="tabs" role="tablist" aria-label="Modo">
+          {(Object.keys(MODE_LABELS) as AppMode[]).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              role="tab"
+              aria-selected={appMode === mode}
+              className={`tabs__tab${appMode === mode ? ' tabs__tab--active' : ''}`}
+              onClick={() => setAppMode(mode)}
+            >
+              {MODE_LABELS[mode]}
+            </button>
+          ))}
+        </nav>
       </header>
+
+      <p className="mode-intro">{MODE_DESCRIPTIONS[appMode]}</p>
 
       {appMode === 'analyze' ? <AnalysisView /> : <PlayView />}
 
-      <footer className="app__footer">
+      <footer className="footer">
         Motor de análise:{' '}
         <a href="https://github.com/official-stockfish/Stockfish" target="_blank" rel="noreferrer">
           Stockfish

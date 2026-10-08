@@ -3,6 +3,7 @@ import { Chess, DEFAULT_POSITION, type Color, type Move } from 'chess.js';
 import { StockfishClient, type AnalysisResult, type Score } from '../engine/stockfishClient';
 import { NO_MOVE, uciMoveToSan, uciMoveToSquares } from '../engine/uciToSan';
 import { classifyMove, negateScore, shouldPause, winPercent, type Classification } from '../lib/coach';
+import { barForGameOver, barFromWhiteScore, toWhiteScore, type BarEvaluation } from '../lib/evaluation';
 import type { Suggestion } from './useStockfish';
 
 // Tempo que o treinador (força máxima) gasta avaliando cada posição.
@@ -47,11 +48,19 @@ export function usePlayVsEngine(eloRating: number) {
   const eloRef = useRef(eloRating);
 
   const [fen, setFen] = useState(DEFAULT_POSITION);
+  const [moves, setMoves] = useState<Move[]>([]);
   const [playerColor, setPlayerColor] = useState<Color>('w');
   const [phase, setPhaseState] = useState<PlayPhase>('starting');
   const [feedback, setFeedback] = useState<MoveFeedback | null>(null);
   const [hint, setHint] = useState<Suggestion | null>(null);
   const [gameOverText, setGameOverText] = useState<string | null>(null);
+  const [evaluation, setEvaluation] = useState<BarEvaluation | null>(null);
+
+  /** Copia o tabuleiro do ref para o estado, que é o que a tela renderiza. */
+  const syncBoard = () => {
+    setFen(chessRef.current.fen());
+    setMoves(chessRef.current.history({ verbose: true }));
+  };
 
   const setPhase = (next: PlayPhase) => {
     phaseRef.current = next;
@@ -71,6 +80,7 @@ export function usePlayVsEngine(eloRating: number) {
     const chess = chessRef.current;
     if (!chess.isGameOver()) return false;
     setGameOverText(describeGameOver(chess));
+    setEvaluation(barForGameOver(chess));
     setPhase('over');
     return true;
   };
@@ -79,7 +89,14 @@ export function usePlayVsEngine(eloRating: number) {
     if (endIfGameOver()) return;
     setPhase('player');
     // Avalia a posição enquanto o jogador pensa, para o retorno sair rápido.
-    void analyzeWithCoach(chessRef.current.fen());
+    const position = chessRef.current.fen();
+    const turn = chessRef.current.turn();
+    const generation = generationRef.current;
+    void analyzeWithCoach(position).then(({ score }) => {
+      if (score && !isStale(generation) && chessRef.current.fen() === position) {
+        setEvaluation(barFromWhiteScore(toWhiteScore(score, turn)));
+      }
+    });
   };
 
   const playOpponentMove = async (generation: number) => {
@@ -91,7 +108,7 @@ export function usePlayVsEngine(eloRating: number) {
 
     const { from, to } = uciMoveToSquares(bestMove);
     chess.move({ from, to, promotion: bestMove.length > 4 ? bestMove.slice(4) : undefined });
-    setFen(chess.fen());
+    syncBoard();
     startPlayerTurn();
   };
 
@@ -119,6 +136,8 @@ export function usePlayVsEngine(eloRating: number) {
       refutation = toSuggestion(move.after, after.bestMove);
     }
 
+    if (scoreAfter) setEvaluation(barForGameOver(chess) ?? barFromWhiteScore(toWhiteScore(scoreAfter, move.color)));
+
     const winBefore = before.score ? winPercent(before.score) : 50;
     const playedUci = move.from + move.to + (move.promotion ?? '');
     const classification = classifyMove(winBefore - winAfter, playedUci === before.bestMove);
@@ -143,11 +162,12 @@ export function usePlayVsEngine(eloRating: number) {
     const generation = ++generationRef.current;
     chessRef.current.reset();
     preAnalysisRef.current = null;
-    setFen(chessRef.current.fen());
+    syncBoard();
     setPlayerColor(color);
     setFeedback(null);
     setHint(null);
     setGameOverText(null);
+    setEvaluation(null);
     setPhase('starting');
 
     await Promise.all([opponentRef.current!.newGame(), coachRef.current!.newGame()]);
@@ -166,7 +186,7 @@ export function usePlayVsEngine(eloRating: number) {
     } catch {
       return false;
     }
-    setFen(chess.fen());
+    syncBoard();
     setHint(null);
     setFeedback(null);
     void reviewPlayerMove(fenBefore, move, generationRef.current);
@@ -178,7 +198,7 @@ export function usePlayVsEngine(eloRating: number) {
     if (phaseRef.current !== 'review') return;
     generationRef.current++;
     chessRef.current.undo();
-    setFen(chessRef.current.fen());
+    syncBoard();
     setFeedback(null);
     startPlayerTurn();
   };
@@ -218,6 +238,9 @@ export function usePlayVsEngine(eloRating: number) {
 
   return {
     fen,
+    moves,
+    lastMove: moves.at(-1) ?? null,
+    evaluation,
     playerColor,
     phase,
     feedback,
