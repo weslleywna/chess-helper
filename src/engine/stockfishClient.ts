@@ -8,6 +8,13 @@ export type AnalysisResult = {
   pv: string[];
 };
 
+/** Atualização parcial de uma busca em andamento (linha `info` do UCI). */
+export type SearchInfo = {
+  depth: number;
+  score: Score;
+  pv: string[];
+};
+
 export const MIN_ELO = 1320;
 export const MAX_ELO = 3190;
 
@@ -21,6 +28,7 @@ export class StockfishClient {
   private isAnalyzing = false;
   private lastScore: Score | null = null;
   private lastPv: string[] = [];
+  private infoListener: ((info: SearchInfo) => void) | null = null;
 
   constructor() {
     this.worker = new Worker(STOCKFISH_WORKER_PATH);
@@ -70,6 +78,11 @@ export class StockfishClient {
     }
     const pvIndex = parts.indexOf('pv');
     if (pvIndex !== -1) this.lastPv = parts.slice(pvIndex + 1);
+
+    const depth = Number(parts[parts.indexOf('depth') + 1]);
+    if (this.infoListener && this.lastScore && Number.isFinite(depth)) {
+      this.infoListener({ depth, score: this.lastScore, pv: this.lastPv });
+    }
   }
 
   private stopAndWaitIdle(): Promise<void> {
@@ -87,11 +100,18 @@ export class StockfishClient {
   /**
    * eloRating: null = força máxima (melhor jogada possível). Um número
    * (1320-3190) restringe o motor a jogar aproximadamente nesse nível.
+   * onInfo recebe a avaliação parcial a cada profundidade concluída.
    */
-  async analyze(fen: string, movetimeMs: number, eloRating: number | null = null): Promise<AnalysisResult> {
+  async analyze(
+    fen: string,
+    movetimeMs: number,
+    eloRating: number | null = null,
+    onInfo?: (info: SearchInfo) => void,
+  ): Promise<AnalysisResult> {
     await this.readyPromise;
 
-    if (this.isAnalyzing) {
+    // Em laço: se várias buscas forem pedidas em sequência, cada uma interrompe a anterior.
+    while (this.isAnalyzing) {
       await this.stopAndWaitIdle();
     }
 
@@ -105,6 +125,7 @@ export class StockfishClient {
     this.isAnalyzing = true;
     this.lastScore = null;
     this.lastPv = [];
+    this.infoListener = onInfo ?? null;
     return new Promise((resolve) => {
       this.currentBestMoveResolve = (result) => {
         this.isAnalyzing = false;
@@ -117,7 +138,7 @@ export class StockfishClient {
 
   async newGame() {
     await this.readyPromise;
-    if (this.isAnalyzing) await this.stopAndWaitIdle();
+    while (this.isAnalyzing) await this.stopAndWaitIdle();
     this.worker.postMessage('ucinewgame');
   }
 
