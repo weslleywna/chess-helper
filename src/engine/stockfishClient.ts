@@ -1,6 +1,11 @@
+/** Avaliação do ponto de vista de quem tem a vez de jogar. */
+export type Score = { type: 'cp' | 'mate'; value: number };
+
 export type AnalysisResult = {
   bestMove: string;
   ponderMove: string | null;
+  score: Score | null;
+  pv: string[];
 };
 
 export const MIN_ELO = 1320;
@@ -14,6 +19,8 @@ export class StockfishClient {
   private resolveReady!: () => void;
   private currentBestMoveResolve: ((result: AnalysisResult) => void) | null = null;
   private isAnalyzing = false;
+  private lastScore: Score | null = null;
+  private lastPv: string[] = [];
 
   constructor() {
     this.worker = new Worker(STOCKFISH_WORKER_PATH);
@@ -37,6 +44,11 @@ export class StockfishClient {
       return;
     }
 
+    if (line.startsWith('info') && line.includes(' score ')) {
+      this.parseInfo(line);
+      return;
+    }
+
     if (line.startsWith('bestmove')) {
       const parts = line.split(' ');
       const bestMove = parts[1];
@@ -44,13 +56,30 @@ export class StockfishClient {
       const ponderMove = ponderIndex !== -1 ? parts[ponderIndex + 1] : null;
       const resolve = this.currentBestMoveResolve;
       this.currentBestMoveResolve = null;
-      resolve?.({ bestMove, ponderMove });
+      resolve?.({ bestMove, ponderMove, score: this.lastScore, pv: this.lastPv });
     }
   };
 
+  private parseInfo(line: string) {
+    const parts = line.split(' ');
+    const scoreIndex = parts.indexOf('score');
+    const type = parts[scoreIndex + 1];
+    const value = Number(parts[scoreIndex + 2]);
+    if ((type === 'cp' || type === 'mate') && Number.isFinite(value)) {
+      this.lastScore = { type, value };
+    }
+    const pvIndex = parts.indexOf('pv');
+    if (pvIndex !== -1) this.lastPv = parts.slice(pvIndex + 1);
+  }
+
   private stopAndWaitIdle(): Promise<void> {
     return new Promise((resolve) => {
-      this.currentBestMoveResolve = () => resolve();
+      // A busca interrompida ainda resolve a promessa de quem a pediu.
+      const previousResolve = this.currentBestMoveResolve;
+      this.currentBestMoveResolve = (result) => {
+        previousResolve?.(result);
+        resolve();
+      };
       this.worker.postMessage('stop');
     });
   }
@@ -74,6 +103,8 @@ export class StockfishClient {
     }
 
     this.isAnalyzing = true;
+    this.lastScore = null;
+    this.lastPv = [];
     return new Promise((resolve) => {
       this.currentBestMoveResolve = (result) => {
         this.isAnalyzing = false;
@@ -82,6 +113,12 @@ export class StockfishClient {
       this.worker.postMessage(`position fen ${fen}`);
       this.worker.postMessage(`go movetime ${movetimeMs}`);
     });
+  }
+
+  async newGame() {
+    await this.readyPromise;
+    if (this.isAnalyzing) await this.stopAndWaitIdle();
+    this.worker.postMessage('ucinewgame');
   }
 
   terminate() {

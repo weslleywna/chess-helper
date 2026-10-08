@@ -1,73 +1,65 @@
 import { useState } from 'react';
-import { ChessBoard } from './components/ChessBoard';
-import { EngineControls, type AnalysisMode } from './components/EngineControls';
-import { SuggestionPanel } from './components/SuggestionPanel';
-import { useChessGame } from './hooks/useChessGame';
-import { useStockfish } from './hooks/useStockfish';
-import { describeMove } from './lib/moveDescription';
+import { AnalysisView } from './components/AnalysisView';
+import { PlayView } from './components/PlayView';
+
+type AppMode = 'analyze' | 'play';
+
+const MODE_DESCRIPTIONS: Record<AppMode, string> = {
+  analyze: 'Faça a jogada do adversário no tabuleiro e descubra a melhor resposta segundo o Stockfish.',
+  play: 'Jogue contra o Stockfish no nível que escolher. Se errar, o treinador mostra o porquê e você pode desfazer.',
+};
 
 export default function App() {
-  const { fen, makeMove, reset, isGameOver } = useChessGame();
-  const { analyze, isThinking, suggestion, clearSuggestion } = useStockfish();
-  const [movetimeMs, setMovetimeMs] = useState(2000);
-  const [mode, setMode] = useState<AnalysisMode>('best');
-  const [eloRating, setEloRating] = useState(1800);
-
-  const handleMove = (from: string, to: string, promotion?: string) => {
-    const moved = makeMove(from, to, promotion);
-    if (moved) clearSuggestion();
-    return moved;
-  };
-
-  const handleReset = () => {
-    reset();
-    clearSuggestion();
-  };
-
-  const handleModeChange = (nextMode: AnalysisMode) => {
-    setMode(nextMode);
-    clearSuggestion();
-  };
-
-  const handleAnalyze = () => {
-    void analyze(fen, movetimeMs, mode === 'rated' ? eloRating : null);
-  };
-
-  const suggestionLabel = mode === 'best' ? 'Melhor resposta' : `Resposta nível ~${eloRating}`;
+  const [appMode, setAppMode] = useState<AppMode>('analyze');
 
   return (
     <div className="app">
       <header className="app__header">
         <h1>Chess Helper</h1>
-        <p>Faça a jogada do adversário no tabuleiro e descubra a melhor resposta segundo o Stockfish.</p>
+        <div className="app__tabs" role="tablist" aria-label="Modo">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={appMode === 'analyze'}
+            className={appMode === 'analyze' ? 'active' : ''}
+            onClick={() => setAppMode('analyze')}
+          >
+            Analisar posição
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={appMode === 'play'}
+            className={appMode === 'play' ? 'active' : ''}
+            onClick={() => setAppMode('play')}
+          >
+            Jogar contra o Stockfish
+          </button>
+        </div>
+        <p>{MODE_DESCRIPTIONS[appMode]}</p>
       </header>
 
-      <main className="app__layout">
-        <div className="app__board">
-          <ChessBoard fen={fen} onMove={handleMove} suggestionArrow={suggestion} />
-        </div>
+      {appMode === 'analyze' ? <AnalysisView /> : <PlayView />}
 
-        <div className="app__side">
-          <EngineControls
-            mode={mode}
-            onModeChange={handleModeChange}
-            eloRating={eloRating}
-            onEloRatingChange={setEloRating}
-            movetimeMs={movetimeMs}
-            onMovetimeChange={setMovetimeMs}
-            onAnalyze={handleAnalyze}
-            onReset={handleReset}
-            isThinking={isThinking}
-            disabled={isGameOver}
-          />
-          <SuggestionPanel
-            san={suggestion?.san ?? null}
-            description={describeMove(suggestion?.san ?? null)}
-            isThinking={isThinking}
-            label={suggestionLabel}
-          />
-        </div>
-      </main>
+      <footer className="app__footer">
+        Motor de análise:{' '}
+        <a href="https://github.com/official-stockfish/Stockfish" target="_blank" rel="noreferrer">
+          Stockfish
+        </a>{' '}
+        via{' '}
+        <a href="https://github.com/nmrugg/stockfish.js" target="_blank" rel="noreferrer">
+          Stockfish.js
+        </a>
+        , licenciado sob a{' '}
+        <a href={`${import.meta.env.BASE_URL}stockfish/Copying.txt`} target="_blank" rel="noreferrer">
+          GPLv3
+        </a>
+        . Este app também é software livre (GPLv3):{' '}
+        <a href="https://github.com/weslleywna/chess-helper" target="_blank" rel="noreferrer">
+          código-fonte
+        </a>
+        .
+      </footer>
     </div>
   );
 }

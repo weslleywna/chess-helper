@@ -132,6 +132,42 @@ code {
   flex-shrink: 0;
 }
 
+.app__tabs {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.app__tabs button {
+  font: inherit;
+  font-size: 15px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.app__tabs button.active {
+  background: var(--accent-bg);
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.app__footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.app__footer a {
+  color: var(--accent);
+}
+
 .app__side {
   flex: 1;
   min-width: 260px;
@@ -273,4 +309,58 @@ code {
   to {
     transform: rotate(360deg);
   }
+}
+
+.coach-panel {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coach-panel p {
+  margin: 0;
+  color: var(--text-h);
+}
+
+.coach-panel--best,
+.coach-panel--good {
+  border-left-color: #2f9e44;
+}
+
+.coach-panel--inaccuracy {
+  border-left-color: #f08c00;
+}
+
+.coach-panel--mistake {
+  border-left-color: #e8590c;
+}
+
+.coach-panel--blunder {
+  border-left-color: #e03131;
+}
+
+.coach-panel__eval {
+  font-family: var(--mono);
+  font-size: 14px;
+}
+
+.coach-panel button {
+  font: inherit;
+  font-size: 15px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.coach-panel button.secondary {
+  background: transparent;
+  color: var(--text-h);
+  border-color: var(--border);
 }

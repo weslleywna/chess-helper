@@ -1,4 +1,5 @@
 import { MAX_ELO, MIN_ELO } from '../engine/stockfishClient';
+import { ELO_PRESETS } from '../lib/constants';
 
 export type AnalysisMode = 'best' | 'rated';
 
@@ -7,17 +8,6 @@ const MOVETIME_LEVELS = [
   { label: 'Padrão — 2s', value: 2000 },
   { label: 'Forte — 5s', value: 5000 },
   { label: 'Máximo — 10s', value: 10000 },
-];
-
-const ELO_PRESETS = [
-  { label: '1320 — Iniciante', value: 1320 },
-  { label: '1500 — Casual', value: 1500 },
-  { label: '1800 — Intermediário', value: 1800 },
-  { label: '2000 — Intermediário forte', value: 2000 },
-  { label: '2200 — Candidato a Mestre', value: 2200 },
-  { label: '2500 — Mestre', value: 2500 },
-  { label: '2800 — Mestre Internacional', value: 2800 },
-  { label: `${MAX_ELO} — Grande Mestre`, value: MAX_ELO },
 ];
 
 type EngineControlsProps = {

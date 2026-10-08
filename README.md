@@ -30,3 +30,9 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Licença
+
+Este projeto é distribuído sob a [GNU General Public License v3.0](LICENSE).
+
+O motor de análise é o [Stockfish](https://github.com/official-stockfish/Stockfish), empacotado para o navegador pelo [Stockfish.js](https://github.com/nmrugg/stockfish.js) (`public/stockfish/`), também sob GPLv3 — veja `public/stockfish/Copying.txt`.
