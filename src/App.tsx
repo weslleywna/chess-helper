@@ -68,6 +68,26 @@ export default function App() {
           />
         </div>
       </main>
+
+      <footer className="app__footer">
+        Motor de análise:{' '}
+        <a href="https://github.com/official-stockfish/Stockfish" target="_blank" rel="noreferrer">
+          Stockfish
+        </a>{' '}
+        via{' '}
+        <a href="https://github.com/nmrugg/stockfish.js" target="_blank" rel="noreferrer">
+          Stockfish.js
+        </a>
+        , licenciado sob a{' '}
+        <a href={`${import.meta.env.BASE_URL}stockfish/Copying.txt`} target="_blank" rel="noreferrer">
+          GPLv3
+        </a>
+        . Este app também é software livre (GPLv3):{' '}
+        <a href="https://github.com/weslleywna/chess-helper" target="_blank" rel="noreferrer">
+          código-fonte
+        </a>
+        .
+      </footer>
     </div>
   );
 }
